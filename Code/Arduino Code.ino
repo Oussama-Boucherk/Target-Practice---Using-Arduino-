@@ -13,11 +13,12 @@ int counter = 0;
 int LDR = A0;
 unsigned long PreviousTime;
 unsigned long GameStartTime;
-unsigned long GameTime = 30000;  // 30 seconds (in milliseconds)
+unsigned long GameTime = 40000;  // 30 seconds (in milliseconds)
 int InitialSpeed = 1500;
-int SpeedFactor = 30;
-
+int SpeedFactor = 35;
+bool C = true;
 int Buzzer = 10;
+int Treshold = 20;
 const int resetButtonPin = 4;  // Pin for reset button
 
 void LCD();
@@ -50,6 +51,7 @@ void setup() {
 }
 
 void loop() {
+  C = true;
   // Check for reset button press
   if (digitalRead(resetButtonPin) > LOW) {  // Button pressed (active low)
     resetGame();
@@ -60,9 +62,9 @@ void loop() {
   TestTime();
   PreviousTime = millis();
   while (millis() - PreviousTime <= (InitialSpeed - Speed)) {
-    LRservo.write(70);  // Move servo to position 70
+    LRservo.write(65);  // Move servo to position 70
     LCD();
-    if (analogRead(LDR) > 20) {
+    if (analogRead(LDR) > Treshold) {
       counter++;
       delay(150);
     }
@@ -72,9 +74,9 @@ void loop() {
 
   PreviousTime = millis();
   while (millis() - PreviousTime <= (InitialSpeed - Speed)) {
-    LRservo.write(107);  // Move servo to position 107
+    LRservo.write(109);  // Move servo to position 107
     LCD();
-    if (analogRead(LDR) > 20) {
+    if (analogRead(LDR) > Treshold) {
       counter++;
       delay(150);
     }
@@ -111,20 +113,20 @@ void GameOver() {
   LRservo.write(90);  // Stop the servo
 
   digitalWrite(Buzzer, HIGH);
-  delay(800);
+  delay(1000);
   digitalWrite(Buzzer, LOW);
 
   int value = EEPROM.read(EEPROMaddress);
-  while (true) {
+  while (C == true) {
     if (value >= counter) {
       lcd.setCursor(2, 3);
       lcd.print("Best Record: ");
       lcd.print(value);
-      while (true) {
+      while (C == true) {
         // Waiting for user interaction to reset
         if (digitalRead(resetButtonPin) > LOW) {
           resetGame();
-          break;
+          // break;
         }
       }
     } else {
@@ -143,7 +145,7 @@ void TestTime() {
 void resetGame() {
   // Reset all game variables
   counter = 0;
-   // Restart the timer
+  // Restart the timer
   LRservo.write(90);  // Return servo to neutral position
 
   // Display reset message
@@ -153,6 +155,10 @@ void resetGame() {
   lcd.setCursor(2, 3);
   lcd.print("Starting Again...");
   delay(3000);
-   GameStartTime = millis();
+  C = false;
+  digitalWrite(Buzzer, HIGH);
+  delay(200);
+  digitalWrite(Buzzer, LOW);
+  GameStartTime = millis();
   lcd.clear();  // Clear LCD and return to game
 }
